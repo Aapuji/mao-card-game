@@ -63,4 +63,16 @@ impl Game {
     fn game_over(&self) -> bool {
         self.game_over
     }
+
+    pub fn total_cards(&self) -> u32 {
+        let mut count = 0u32;
+        for player in &self.players {
+            count += player.hand().len() as u32;
+        }
+
+        count += self.draw_pile.size() as u32;
+        count += self.used_pile.size() as u32;
+
+        count
+    }
 }
