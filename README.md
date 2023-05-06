@@ -9,6 +9,7 @@ A card game where you figure out the rules as you go.
 - Player receives a card for breaking a rule - that player must say “thank you”
 - If player doesn't say what they are supposed to say, then game says "Failure to say \_." That is also a penalty, and they would be given a card.
   - Probably have the system wait for 5 seconds before saying "Failure to say \_.
+  - Same thing if they say something different that is not a different message. (eg. "bob ross" rather than "Have a nice day")
 - If player says something they can say in another situation, but they do it in the wrong situtation, game says, "Incorrect use of \_."
 - If player plays a 7, they must say "Have a nice day." If they don't, the game says "Failure to say 'Have a nice day.'" and would penalize them.
 - For each additional 7 played on top of the base 7, the next player must add a “very” before the “nice”.
