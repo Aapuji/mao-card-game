@@ -1,5 +1,6 @@
 use crate::card::Card;
 
+#[derive(Debug)]
 pub struct Player {
     name: String,
     hand: Vec<Card>,
@@ -23,5 +24,20 @@ impl Player {
 
     pub fn hand(&self) -> &Vec<Card> {
         &self.hand
+    }
+}
+
+#[macro_export]
+macro_rules! players {
+    () => {
+        vec![]
+    };
+
+    ( $( $name:expr ),* ) => {
+      vec![$(
+        mao::player::Player::new(
+          String::from($name)
+        )
+      ),*]
     }
 }
