@@ -52,7 +52,7 @@ impl Deck {
         I: Iterator<Item = Card>,
     {
         for card in cards {
-            self.cards.insert(0, card);
+            self.cards.push_front(card);
         }
     }
 
