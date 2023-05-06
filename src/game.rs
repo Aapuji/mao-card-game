@@ -33,6 +33,9 @@ impl Game {
         Game::check_size_and_append(&mut game.draw_pile, 25);
         game.draw_pile.inject(1usize, &mut game.used_pile).unwrap();
 
+        // Starts game
+        println!("Commence");
+
         game
     }
 
