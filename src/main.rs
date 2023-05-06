@@ -25,7 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let players = players!("Bob", "Darth", "Alice");
     let GAME = Game::new(players);
 
-    println!("{:#?}", GAME);
+    println!("{:#?}", &GAME);
+
+    println!("{}", GAME.total_cards());
 
     Ok(())
 }
