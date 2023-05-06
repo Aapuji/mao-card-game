@@ -1,6 +1,7 @@
 use crate::deck::Deck;
 use crate::player::Player;
 
+#[derive(Debug)]
 pub struct Game {
     players: Vec<Player>,
     draw_pile: Deck,
