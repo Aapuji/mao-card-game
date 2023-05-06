@@ -19,6 +19,7 @@ A card game where you figure out the rules as you go.
 - Playing an Ace skips the next player
 - Playing a 2 allows you to go again
 - Playing an 8 flips the direction of play
+- Jack is a wild, allowing them to change the suit.
 - If someone has 1 card, they have to say "Mao." If they don't, the system penalizes them with "Failure to say 'Mao.'" and gives them one card.
 - The aim of the game is to get rid of all of your cards.
 - Whoever wins a round can add or remove a rule for the next round.
