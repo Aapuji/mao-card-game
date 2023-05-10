@@ -1,12 +1,24 @@
 use term_size;
+use std::io::{Write, BufRead, stdout, stdin};
+use std::fmt::Arguments;
 
-pub trait Screen {}
+pub trait Screen {
+    fn render_to_buffer(&self, fb: &mut TextFrameBuffer) -> RenderResult<()>;
 
-impl dyn Screen {}
+    fn render(&self) -> RenderResult<()> {
+        let mut fb = TextFrameBuffer::new()?;
+        self.render_to_buffer(&mut fb)?;
+        println!("\x1B[2J{}", fb.to_string()); // "\x1B[2J" is clear
+        Ok(())
+    }
 
-pub struct TestScreen {}
-
-impl Screen for TestScreen {}
+    fn take_input(prompt: Arguments) -> Option<String> {
+      stdout().lock().write_fmt(prompt);
+        let mut txt = "".to_string();
+        stdin().lock().read_line(&mut txt).ok()?;
+        Some(txt)
+    }
+}
 
 #[derive(Debug)]
 pub enum RenderError {
@@ -32,17 +44,25 @@ pub type RenderResult<T> = Result<T, RenderError>;
 pub struct TextFrameBuffer {
     w: usize,
     h: usize,
-    view: Vec<Vec<char>>,
+    view: Vec<Vec<char>>, // Do you want to maybe make a type here instead? Eg. `type Vec2D<T> = Vec<Vec<T>>`? Then use that?
 }
+
 impl TextFrameBuffer {
     pub fn new() -> RenderResult<Self> {
         let (w, h) = term_size::dimensions().ok_or(RenderError::TerminalDimensionsBad)?;
-        println!("DIM: {w}, {h}");
         Ok(Self {
             view: vec![vec![' '; h - 1]; w],
             w,
             h: h - 1,
         })
+    }
+
+    pub fn text(&mut self, txt: &str, x: usize, y: usize) -> RenderResult<()> {
+        self.check_bounds(x, y, txt.len(), 1)?;
+        for (i, char) in txt.chars().into_iter().enumerate() {
+            self.view[x + i][y] = char;
+        }
+        Ok(())
     }
 
     fn check_bounds(&self, xs: usize, ys: usize, w: usize, h: usize) -> RenderResult<()> {
@@ -73,6 +93,7 @@ impl TextFrameBuffer {
         }
         Ok(())
     }
+
     pub fn outline_box(
         &mut self,
         profile: BoxDrawingProfile,
@@ -106,6 +127,7 @@ impl TextFrameBuffer {
 pub enum BoxDrawingProfile {
     Normal,
 }
+
 impl BoxDrawingProfile {
     pub const SHADING: [char; 4] = [' ', '░', '▒', '▓'];
 
@@ -135,7 +157,6 @@ impl std::string::ToString for TextFrameBuffer {
         println!("selfdim: {},{}", self.w, self.h);
         let mut txt = "".to_string();
         for y in 0..self.h {
-            println!("{y}");
             for x in 0..self.w {
                 txt += &self.view[x][y].to_string();
             }
@@ -143,4 +164,13 @@ impl std::string::ToString for TextFrameBuffer {
         }
         txt
     }
+}
+
+pub trait RenderableElement {
+  const W: usize;
+  const H: usize;
+    fn render_size(&self) -> (usize, usize) {
+      (Self::W, Self::H)
+    }
+    fn render(&self, fb: &mut TextFrameBuffer, x: usize, y: usize) -> RenderResult<()>;
 }
