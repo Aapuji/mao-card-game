@@ -1,33 +1,32 @@
 use mao::card::{Card, Suit, Value};
-use mao::deck::Deck;
 use mao::game::Game;
 use mao::players;
-use mao::render::engine::{BoxDrawingProfile, TextFrameBuffer};
+use mao::render::engine::{RenderResult, RenderableElement, Screen, TextFrameBuffer};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Hello World");
+    println!("Rendering...");
 
-    // let c = Card::new(Value::Ace, Suit::Spades);
+    let players = players!(
+        "Bob",
+        "Darth",
+        "Alice",
+        "Dumbledore",
+        "Andor",
+        "XxMrFancyu2xX",
+        "Bob Ross",
+        "Steve",
+    );
+    Game::new(players);
 
-    // println!("{}", c);
+    println!("Total Cards: {}", Game::instance().total_cards());
 
-    // let mut deck = Deck::default_52();
-    // println!("{:#?}; {}", deck, deck.size());
-    // deck.shuffle();
-    // println!("SHUFFLED: {:#?}; {}", deck, deck.size());
+    for i in 0..game.num_players() - 1 {
+        println!("Player {i}: {:#?}", Game::instance().current_player());
+        Game::instance().next_player();
+    }
 
-    // let mut fb = TextFrameBuffer::new()?;
+    (TestScreen {}).render()?;
 
-    // fb.fill_box(BoxDrawingProfile::SHADING[2], 2, 1, 4, 4)?;
-    // fb.outline_box(BoxDrawingProfile::Normal, 2, 1, 4, 4)?;
-
-    // println!("{}", fb.to_string());
-    let players = players!("Bob", "Darth", "Alice");
-    let GAME = Game::new(players);
-
-    println!("{:#?}", &GAME);
-
-    println!("{}", GAME.total_cards());
-
+    Game::instance().play();
     Ok(())
 }
