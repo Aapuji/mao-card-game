@@ -8,7 +8,7 @@ use std::iter::IntoIterator;
 
 #[derive(Debug)]
 pub struct Deck {
-    cards: VecDeque<Card>,
+    cards: VecDeque<Card>, // upside-down stack (last element is last card in stack)
 }
 
 impl Deck {
@@ -38,6 +38,14 @@ impl Deck {
 
     pub fn size(&self) -> usize {
         self.cards.len()
+    }
+
+    pub fn push_top(&mut self, card: Card) {
+        self.cards.push_front(card);
+    }
+
+    pub fn push_bottom(&mut self, card: Card) {
+        self.cards.push_back(card);
     }
 
     pub fn append<I>(&mut self, cards: I)
