@@ -1,19 +1,20 @@
-use term_size;
-use std::io::{Write, BufRead, stdout, stdin};
+use crate::game::Game;
 use std::fmt::Arguments;
+use std::io::{stdin, stdout, BufRead, Write};
+use term_size;
 
 pub trait Screen {
-    fn render_to_buffer(&self, fb: &mut TextFrameBuffer) -> RenderResult<()>;
+    fn render_to_buffer(&self, fb: &mut TextFrameBuffer, game: Option<&Game>) -> RenderResult<()>;
 
-    fn render(&self) -> RenderResult<()> {
+    fn render(&self, game: Option<&Game>) -> RenderResult<()> {
         let mut fb = TextFrameBuffer::new()?;
-        self.render_to_buffer(&mut fb)?;
+        self.render_to_buffer(&mut fb, game)?;
         println!("\x1B[2J{}", fb.to_string()); // "\x1B[2J" is clear
         Ok(())
     }
 
     fn take_input(prompt: Arguments) -> Option<String> {
-      stdout().lock().write_fmt(prompt);
+        stdout().lock().write_fmt(prompt);
         let mut txt = "".to_string();
         stdin().lock().read_line(&mut txt).ok()?;
         Some(txt)
@@ -41,19 +42,80 @@ impl std::error::Error for RenderError {}
 
 pub type RenderResult<T> = Result<T, RenderError>;
 
+const ANSI_ESCAPE: &str = "\x1B";
+const ANSI_STYLE_RESET: &str = "\x1B[0m";
+
+#[derive(Clone, Copy)]
+pub enum TextColor {
+    None,
+    Red,
+  // White,
+  // Black,
+}
+impl TextColor {
+    fn ansi_fg_id(&self) -> String {
+        match self {
+            Self::None => "",
+            Self::Red => "31",
+        }
+        .to_string()
+    }
+    fn ansi_bg_id(&self) -> String {
+        match self {
+            Self::None => "",
+            Self::Red => "41",
+        }
+        .to_string()
+    }
+}
+#[derive(Clone, Copy)]
+pub struct TextStyle {
+    pub fg: TextColor,
+    pub bg: TextColor,
+}
+impl TextStyle {
+    pub fn fg_only(fg: TextColor) -> Self {
+      Self { fg, bg: TextColor::None }
+    }
+    pub fn bg_only(bg: TextColor) -> Self {
+      Self { fg: TextColor::None, bg }
+    }
+}
+impl Default for TextStyle {
+    fn default() -> Self {
+        Self {
+            fg: TextColor::None,
+            bg: TextColor::None,
+        }
+    }
+}
+impl std::fmt::Display for TextStyle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(// note: Replit will ignore the first one for whatever reason, TODO: solution that takes advantage of this
+            f,
+            "{ANSI_ESCAPE}[{}m{ANSI_ESCAPE}[{}m",
+            self.bg.ansi_bg_id(),
+            self.fg.ansi_fg_id(),
+        )
+    }
+}
+
 pub struct TextFrameBuffer {
     w: usize,
     h: usize,
     view: Vec<Vec<char>>, // Do you want to maybe make a type here instead? Eg. `type Vec2D<T> = Vec<Vec<T>>`? Then use that?
+    style_view: Vec<Vec<TextStyle>>,
 }
 
 impl TextFrameBuffer {
     pub fn new() -> RenderResult<Self> {
         let (w, h) = term_size::dimensions().ok_or(RenderError::TerminalDimensionsBad)?;
+        let h = h - 2;
         Ok(Self {
-            view: vec![vec![' '; h - 1]; w],
+            view: vec![vec![' '; h]; w],
+            style_view: vec![vec![TextStyle::default(); h]; w],
             w,
-            h: h - 1,
+            h,
         })
     }
 
@@ -61,6 +123,23 @@ impl TextFrameBuffer {
         self.check_bounds(x, y, txt.len(), 1)?;
         for (i, char) in txt.chars().into_iter().enumerate() {
             self.view[x + i][y] = char;
+        }
+        Ok(())
+    }
+
+    pub fn style_box(
+        &mut self,
+        style: TextStyle,
+        xs: usize,
+        ys: usize,
+        w: usize,
+        h: usize,
+    ) -> RenderResult<()> {
+        self.check_bounds(xs, ys, w, h)?;
+        for x in xs..xs + w {
+            for y in ys..ys + h {
+                self.style_view[x][y] = style;
+            }
         }
         Ok(())
     }
@@ -158,7 +237,11 @@ impl std::string::ToString for TextFrameBuffer {
         let mut txt = "".to_string();
         for y in 0..self.h {
             for x in 0..self.w {
-                txt += &self.view[x][y].to_string();
+                txt += format!(
+                    "{}{}{}",
+                    self.style_view[x][y], self.view[x][y], ANSI_STYLE_RESET
+                )
+                .as_str();
             }
             txt += &"\n";
         }
@@ -167,10 +250,10 @@ impl std::string::ToString for TextFrameBuffer {
 }
 
 pub trait RenderableElement {
-  const W: usize;
-  const H: usize;
+    const W: usize;
+    const H: usize;
     fn render_size(&self) -> (usize, usize) {
-      (Self::W, Self::H)
+        (Self::W, Self::H)
     }
     fn render(&self, fb: &mut TextFrameBuffer, x: usize, y: usize) -> RenderResult<()>;
 }
