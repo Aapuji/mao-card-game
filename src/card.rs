@@ -1,4 +1,6 @@
-use crate::render::engine::{BoxDrawingProfile, RenderResult, RenderableElement, TextFrameBuffer};
+use crate::render::engine::{
+    BoxDrawingProfile, RenderResult, RenderableElement, TextColor, TextFrameBuffer, TextStyle,
+};
 use enum_iterator::Sequence;
 use std::fmt::Display;
 
@@ -20,7 +22,11 @@ impl Display for Card {
     }
 }
 
-impl RenderableElement for Card {
+pub enum RenderableCard {
+    Front(Card),
+    Back,
+}
+impl RenderableElement for RenderableCard {
     const W: usize = 5;
     const H: usize = 5;
     fn render_size(&self) -> (usize, usize) {
@@ -28,16 +34,30 @@ impl RenderableElement for Card {
     }
     fn render(&self, fb: &mut TextFrameBuffer, x: usize, y: usize) -> RenderResult<()> {
         fb.outline_box(BoxDrawingProfile::Normal, x, y, Self::W, Self::H)?;
-        let value_str = self.value.name();
-        let suit_str = self.suit.name();
-        fb.text(value_str, x + 1, y + 1)?;
-        fb.text(value_str, x + Self::W - 2, y + Self::H - 2)?;
-
-        // {
-        //   let count = self.value.count();
-        //   for i in 0 .. 5
-        // }
-        fb.text(suit_str, x + Self::W / 2, y + Self::H / 2)?;
+        match self {
+            Self::Front(card) => {
+                let value_str = card.value.name();
+                let suit_str = card.suit.name();
+                let suit_style = card.suit.draw_style();
+                fb.text(value_str, x + 1, y + 1)?;
+                fb.text(
+                    value_str,
+                    x + Self::W - 1 - value_str.len(),
+                    y + Self::H - 2,
+                )?;
+                fb.text(suit_str, x + Self::W / 2, y + Self::H / 2)?;
+                fb.style_box(suit_style, x + 1, y + 1, Self::W - 2, Self::H - 2)?;
+            }
+            Self::Back => {
+                fb.fill_box(
+                    BoxDrawingProfile::SHADING[2],
+                    x + 1,
+                    y + 1,
+                    Self::W - 2,
+                    Self::H - 2,
+                )?;
+            }
+        }
         Ok(())
     }
 }
@@ -117,6 +137,14 @@ impl Suit {
             Self::Diamonds => "\u{2666}",
             Self::Hearts => "\u{2665}",
             Self::Spades => "\u{2660}",
+        }
+    }
+    fn draw_style(&self) -> TextStyle {
+        match self {
+            Self::Clubs => TextStyle::default(),
+            Self::Diamonds => TextStyle::fg_only(TextColor::Red),
+            Self::Hearts => TextStyle::bg_only(TextColor::Red),
+            Self::Spades => TextStyle::default(),
         }
     }
 }
