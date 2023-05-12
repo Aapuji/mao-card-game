@@ -1,8 +1,8 @@
 use crate::deck::Deck;
 use crate::player::Player;
-use std::sync::{Mutex, MutexGuard};
 
 #[derive(Debug)]
+/// The game control struct, containing all game info and state transitions.
 pub struct Game {
     players: Vec<Player>,
     draw_pile: Deck,
@@ -13,17 +13,14 @@ pub struct Game {
     // rules: Vec<Rule> or HashSet<Rule> ?
 }
 
-// SciDev! Please make this description good. Idk if its right.
-/// The `Game` singleton that all the player computers reference.
-static GAME_SINGLETON: Mutex<Option<Game>> = Mutex::new(None);
+// Note: Removed GAME_INSTANCE, because it looked like no matter
+// what I did, there was guaranteed threadlock due to taking multiple
+// mutable references simultaniously. We will need to pass a
+// reference to game directly to game to all function calls that could
+// need it.
 
 impl Game {
-    /// Takes a reference to the `Game` singleton in a thread-safe way.
-    pub fn instance<'a>() -> MutexGuard<'a, Option<Game>> {
-        GAME_SINGLETON.lock().unwrap()
-    }
-
-    pub fn begin(players: Vec<Player>) {
+    pub fn new(players: Vec<Player>) -> Self {
         let mut game = Self {
             players,
             draw_pile: Deck::default_52(),
@@ -32,7 +29,6 @@ impl Game {
             player_index: 0,
             game_over: false,
         };
-      
 
         // Deals 7 cards to each player
         // If there are less than 24 cards left, it adds another 52 cards to the deck
@@ -51,7 +47,7 @@ impl Game {
         // Starts game
         println!("Commence");
 
-        Self::instance() = game;
+        game
     }
 
     /// Checks size of `pile`. If it's smaller than `cmp`, then it appends a randomized `Deck`.
@@ -86,6 +82,7 @@ impl Game {
     }
 
     /// Goes through gameplay loop until a player wins, returns a ref to winning player
+    /// Currently in progress, and todo. Will probably work on after display is finished
     pub fn play(&mut self) -> &Player {
         /*
           Loop through each player
@@ -97,17 +94,16 @@ impl Game {
         */
         while !self.game_over {
             let choose = true; // true = plays card, false = draws card
-            let current = self.current_player_mut();
             if choose {
-                if current.num_cards() == 0 {
+                if self.players[self.player_index].num_cards() == 0 {
                     self.game_over = true;
                     break;
-                } else if self.current_player().num_cards() == 1 {
+                } else if self.players[self.player_index].num_cards() == 1 {
                     println!("Mao!");
                 }
-                current.play_card(0, &mut self.used_pile);
+                self.players[self.player_index].play_card(0, &mut self.used_pile);
             } else {
-                self.current_player_mut().draw(&mut self.draw_pile);
+                self.players[self.player_index].draw(&mut self.draw_pile);
             }
 
             self.next_player();
