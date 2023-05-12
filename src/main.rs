@@ -1,7 +1,9 @@
+use mao::ansi::Ansi::{Green, Reset};
 use mao::card::{Card, Suit, Value};
 use mao::game::Game;
 use mao::players;
 use mao::render::engine::{RenderResult, RenderableElement, Screen, TextFrameBuffer};
+use mao::render::play_screen::PlayScreen;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Rendering...");
@@ -16,17 +18,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Bob Ross",
         "Steve",
     );
-    Game::new(players);
+    let mut game = Game::new(players);
 
-    println!("Total Cards: {}", Game::instance().total_cards());
+    println!("{}Total Cards: {}{}", Green, game.total_cards(), Reset);
+    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
-    for i in 0..game.num_players() - 1 {
-        println!("Player {i}: {:#?}", Game::instance().current_player());
-        Game::instance().next_player();
-    }
+    // for i in 0..game.num_players() - 1 {
+    //     // println!("Player {i}: {:#?}", game.current_player());
+    //     game.next_player();
+    // }
 
-    (TestScreen {}).render()?;
+    // game.play();
 
-    Game::instance().play();
+    PlayScreen::PlayerTurn.render(Some(&game))?;
+
     Ok(())
 }
