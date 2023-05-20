@@ -3,7 +3,8 @@ A card games where you find out the rules as you go.
 
 ## Rules
 These are the base rules and how things will work. If you don't want the rules and mechanics spoiled for you, then don't look further.
-*Progress further at your own risk*
+
+**PROGRESS FURTHER AT YOUR OWN RISK**
 
 - Game starts with "Commence".
 - Players are dealt 7 cards each.
