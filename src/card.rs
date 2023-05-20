@@ -1,18 +1,31 @@
-use crate::render::engine::{
-    BoxDrawingProfile, RenderResult, RenderableElement, TextColor, TextFrameBuffer, TextStyle,
-};
+use crate::render::ansi::ANSIColor;
+use crate::render::engine::{BoxDrawingProfile, RenderResult, RenderableElement, TextFrameBuffer};
 use enum_iterator::Sequence;
+use std::cmp::PartialEq;
 use std::fmt::Display;
+use std::hash::Hash;
 
-#[derive(Debug, Clone, Sequence)]
+/// A struct representing a card, with `value` and `suit` fields.
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Sequence)]
 pub struct Card {
-    pub value: Value,
-    pub suit: Suit,
+    value: Value,
+    suit: Suit,
 }
 
 impl Card {
+    /// Makes a new `Card` with value `value` and suit `suit`.
     pub fn new(value: Value, suit: Suit) -> Self {
         Self { value, suit }
+    }
+
+    /// Returns `self.suit`.
+    pub fn suit(&self) -> Suit {
+        self.suit
+    }
+
+    /// Returns `self.value`.
+    pub fn value(&self) -> Value {
+        self.value
     }
 }
 
@@ -22,23 +35,28 @@ impl Display for Card {
     }
 }
 
+/// Renderer for cards so they can be displayed to the screen.
 pub enum RenderableCard {
     Front(Card),
     Back,
 }
+
 impl RenderableElement for RenderableCard {
     const W: usize = 5;
     const H: usize = 5;
-    fn render_size(&self) -> (usize, usize) {
-        (Self::W, Self::H)
-    }
+
     fn render(&self, fb: &mut TextFrameBuffer, x: usize, y: usize) -> RenderResult<()> {
         fb.outline_box(BoxDrawingProfile::Normal, x, y, Self::W, Self::H)?;
+        fb.fill_box(' ', x + 1, y + 1, Self::W - 2, Self::H - 2)?;
+
         match self {
             Self::Front(card) => {
-                let value_str = card.value.name();
-                let suit_str = card.suit.name();
-                let suit_style = card.suit.draw_style();
+                let value = card.value();
+                let value_str = value.name();
+                let suit = card.suit();
+                let suit_str = suit.name();
+                let suit_color = card.suit().color();
+
                 fb.text(value_str, x + 1, y + 1)?;
                 fb.text(
                     value_str,
@@ -46,8 +64,9 @@ impl RenderableElement for RenderableCard {
                     y + Self::H - 2,
                 )?;
                 fb.text(suit_str, x + Self::W / 2, y + Self::H / 2)?;
-                fb.style_box(suit_style, x + 1, y + 1, Self::W - 2, Self::H - 2)?;
+                fb.style_fg_box(suit_color, x + 1, y + 1, Self::W - 2, Self::H - 2)?;
             }
+
             Self::Back => {
                 fb.fill_box(
                     BoxDrawingProfile::SHADING[2],
@@ -58,11 +77,13 @@ impl RenderableElement for RenderableCard {
                 )?;
             }
         }
+
         Ok(())
     }
 }
 
-#[derive(Debug, Clone, Sequence)]
+/// An enum of all the possible values a card can have.
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Sequence)]
 pub enum Value {
     Ace,
     Two,
@@ -78,7 +99,9 @@ pub enum Value {
     Queen,
     King,
 }
+
 impl Value {
+    /// Returns the "name" of the value, or what would be displayed on a standard set of cards.
     fn name(&self) -> &str {
         &match self {
             Self::Ace => "A",
@@ -97,6 +120,7 @@ impl Value {
         }
     }
 
+    /// Returns the effective count value for the card. Eg. Ace: 1, 2: 2, ..., J: 11, Q: 12, K: 13.
     fn count(&self) -> u8 {
         match self {
             Self::Ace => 1,
@@ -122,7 +146,8 @@ impl Display for Value {
     }
 }
 
-#[derive(Debug, Clone, Sequence)]
+/// Enum representing all the possible suits for a card.
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Sequence)]
 pub enum Suit {
     Clubs,
     Diamonds,
@@ -131,6 +156,7 @@ pub enum Suit {
 }
 
 impl Suit {
+    /// Returns the name of the suit (what would be displayed).
     fn name(&self) -> &str {
         &match self {
             Self::Clubs => "\u{2663}",
@@ -139,12 +165,16 @@ impl Suit {
             Self::Spades => "\u{2660}",
         }
     }
-    fn draw_style(&self) -> TextStyle {
+
+    /// Returns the style of the displayed output.
+    ///
+    /// Either `ANSIColor::Default` or `ANSIColor::LightRed`.
+    fn color(&self) -> ANSIColor {
         match self {
-            Self::Clubs => TextStyle::default(),
-            Self::Diamonds => TextStyle::fg_only(TextColor::Red),
-            Self::Hearts => TextStyle::bg_only(TextColor::Red),
-            Self::Spades => TextStyle::default(),
+            Self::Clubs => ANSIColor::Default,
+            Self::Spades => ANSIColor::Default,
+            Self::Diamonds => ANSIColor::Red,
+            Self::Hearts => ANSIColor::Red,
         }
     }
 }
