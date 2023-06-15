@@ -1,3 +1,9 @@
+/* Created by Skylar Huber
+ *
+ * Rendering engine code. Responsible for providing all the functions needed
+ * to draw things on the screen such as rectangles, boxes, and text.
+ */
+
 use crate::game::Game;
 use crate::render::ansi::{ANSIColor, ANSIStyle, ANSI_STYLE_RESET};
 use core::fmt::Debug;
@@ -101,7 +107,7 @@ impl TextFrameBuffer {
     /// Creates a new empty `TextFrameBuffer` with the terminal's current dimensions.
     pub fn new() -> RenderResult<Self> {
         let (w, h) = term_size::dimensions().ok_or(RenderError::TerminalDimensionsBad)?;
-        let h = h - 2;
+        let h = h - 3;
         Ok(Self {
             view: vec![vec![' '; h]; w],
             style_view: vec![vec![ANSIStyle::default(); h]; w],
@@ -231,6 +237,12 @@ impl TextFrameBuffer {
         Ok(())
     }
 
+    pub fn style_char(&mut self, style: ANSIStyle, x: usize, y: usize) -> RenderResult<()> {
+        self.check_bounds(x, y, 1, 1)?;
+        self.style_view[x][y] = style;
+        Ok(())
+    }
+
     /// Helper function that checks if a box region is safe to draw in without indexing out of bounds.
     fn check_bounds(&self, xs: usize, ys: usize, w: usize, h: usize) -> RenderResult<()> {
         if xs + w > self.w || ys + h > self.h {
@@ -304,7 +316,7 @@ impl BoxDrawingProfile {
         let raw = match self {
             Self::Normal => [
                 ['┌', '─', '┐'], // comments
-                ['│', ' ', '│'],   // preserve
+                ['│', ' ', '│'], // preserve
                 ['└', '─', '┘'], // formatting
             ],
         };
@@ -333,7 +345,15 @@ impl std::string::ToString for TextFrameBuffer {
                 let style = self.style_view[x][y];
                 let char = self.view[x][y];
                 let style_release = if style.has_style() {
-                    ANSI_STYLE_RESET
+                    if x != w - 1 {
+                        if style == self.style_view[x + 1][y] {
+                            ""
+                        } else {
+                            ANSI_STYLE_RESET
+                        }
+                    } else {
+                        ANSI_STYLE_RESET
+                    }
                 } else {
                     ""
                 };
