@@ -1,9 +1,12 @@
+/* Created by Skylar Huber
+ * 
+ * Manages color formatting for the render engine, which can be drawn to the scren.
+ */
 use std::fmt::{Debug, Display};
 
 /// Escape symbol for terminal style and color: https://en.wikipedia.org/wiki/ANSI_escape_code
 const ANSI_ESCAPE: &str = "\x1B";
 pub const ANSI_STYLE_RESET: &str = "\x1B[0m";
-
 
 /// Represents a combined style for a single `char` in the renerer.
 ///
@@ -11,7 +14,7 @@ pub const ANSI_STYLE_RESET: &str = "\x1B[0m";
 /// - color (either foreground, background, or neither)
 /// - if it's underlined
 /// - if it's bold
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ANSIStyle {
     color: ANSIColor,
     is_fg: bool,
@@ -117,7 +120,7 @@ impl Display for ANSIModifier {
 }
 
 /// Represents all different kinds of colors that the console can render.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ANSIColor {
     RGB(u8, u8, u8),
     Default,
@@ -140,8 +143,12 @@ pub enum ANSIColor {
 }
 
 impl ANSIColor {
-    pub fn fg(&self) -> String { self.to_string(true) }
-    pub fn bg(&self) -> String { self.to_string(false) }
+    pub fn fg(&self) -> String {
+        self.to_string(true)
+    }
+    pub fn bg(&self) -> String {
+        self.to_string(false)
+    }
 
     /// Gets the full ANSI code for this color.
     fn to_string(&self, is_fg: bool) -> String {
