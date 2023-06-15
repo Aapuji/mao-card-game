@@ -1,3 +1,10 @@
+/* Created by Om Sharma
+ * 
+ * This program simulates a deck with the "Deck" struct,
+ * which holds all of the cards in the deck. It will be
+ * able to shuffle itself, deal cards, and more. 
+ */
+
 use crate::card::Card;
 use crate::player::Player;
 use enum_iterator::all;
@@ -8,7 +15,7 @@ use std::iter::IntoIterator;
 use std::ops::{Index, IndexMut};
 
 /// A struct representing a deck.
-/// Implemented as just a `VecDeque<mao::card::Card>`. 
+/// Implemented as just a `VecDeque<mao::card::Card>`.
 #[derive(Debug)]
 pub struct Deck {
     cards: VecDeque<Card>, // upside-down stack (last element is last card in stack)
@@ -88,14 +95,9 @@ impl Deck {
     }
 
     /// Attempts to deal `amt` cards to `player`'s hand. If there aren't enough cards in the deck, it returns `Err` with the number of cards it didn't deal.
-    pub fn deal(&mut self, amt: usize, player: &mut Player) -> Result<(), usize> {
+    fn deal_fallible(&mut self, amt: usize, player: &mut Player) -> Result<Vec<Card>, usize> {
         if self.size() == 0usize {
             return Err(amt);
-        }
-
-        if amt == self.size() {
-            player.mut_hand().extend(self.cards.drain(0..));
-            return Ok(());
         }
 
         if amt > self.size() {
@@ -104,8 +106,15 @@ impl Deck {
             return Err(amt - size);
         }
 
-        player.mut_hand().extend(self.cards.drain(0..amt));
-        Ok(())
+        let drawn: Vec<Card> = self.cards.drain(0..amt).collect();
+        player.mut_hand().extend(drawn.iter());
+        Ok(drawn)
+    }
+
+    /// This deals cards, just like `deal_fallible`, but will append a new deck to the end if it cannot deal `amt` cards.
+    pub fn deal(&mut self, amt: usize, player: &mut Player) -> Vec<Card> {
+        self.check_size_and_append(amt);
+        self.deal_fallible(amt, player).unwrap()
     }
 
     /// Prepends `amt` cards into `deck`. If `amt` is larger than `self.size()`, it still adds as many as it can (emptying this deck), but then it also returns `Err` with the number of cards it did not prepend.
@@ -118,6 +127,19 @@ impl Deck {
 
         deck.prepend(self.cards.drain(0..amt));
         Ok(())
+    }
+
+    /// Checks size of `pile`. If it's smaller than `cmp`, then it appends a randomized `Deck`.
+    pub fn check_size_and_append(&mut self, cmp: usize) {
+        if self.size() < cmp {
+            let mut another = Deck::default_52();
+            another.shuffle();
+            self.append(another.into_iter());
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.cards.drain(0..);
     }
 }
 
