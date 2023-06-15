@@ -1,3 +1,13 @@
+/* Created by Om Sharma
+ * 
+ * The "RuleMap" struct maps ActionOptions to a vector of
+ * Rules. These rules are all the rules that apply the
+ * action corresponding to the ActionOption. It will be
+ * able to create a default RuleMap, push a rule to the
+ * end of a vector, get the corresponding vector for an
+ * Action.
+ */
+
 use crate::rule::priority::ActionOption;
 use crate::rule::Rule;
 use enum_iterator::all;
@@ -6,6 +16,7 @@ use std::collections::HashMap;
 /// The key type for a `RuleMap`.
 type Key = ActionOption;
 
+/// A struct mapping an `ActionOption` to a collection of rules that have that action.
 #[derive(Debug)]
 pub struct RuleMap {
     map: HashMap<Key, Vec<Rule>>,
@@ -28,28 +39,55 @@ impl RuleMap {
         Self { map }
     }
 
-    /// Pushes `rule` to end of the vector at key `option`.
-    pub fn push_to(&mut self, option: Key, rule: Rule) -> Result<(), &'static str> {
-        self.map
-            .get_mut(&option)
-            .ok_or_else(|| "Invalid option, not in map.")?
-            .push(rule);
+    /// Pushes `rule` to end of the vector at key `option`, or returns an error.
+    pub fn push_to(&mut self, option: Key, rule: Rule) -> Option<()> {
+        self.map.get_mut(&option)?.push(rule);
 
-        Ok(())
+        Some(())
     }
 
-    pub fn empty_vec(&mut self, option: Key) {
-        self.map
-            .get_mut(&option)
-            .expect("Invalid option, not in map.")
-            .clear()
+    /// Empties the rules vector for key `option`.
+    pub fn empty_vec(&mut self, option: Key) -> Option<()> {
+        self.map.get_mut(&option)?.clear();
+
+        Some(())
     }
 
+    /// Returns the vector of rules for a given `ActionOption`.
     pub fn get(&self, option: &Key) -> Option<&Vec<Rule>> {
         self.map.get(option)
     }
 
+    /// Returns the number of rules for a given `ActionOption`, or returns an error if the option is invalid.
     pub fn len_of(&self, option: &Key) -> Option<usize> {
         Some(self.map.get(option)?.len())
+    }
+
+    pub fn validate_option(&self, option: ActionOption) -> bool {
+        match self.map.get(&option) {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    pub fn contains(&self, rule: Rule) -> bool {
+        for (_option, rules) in self.map.iter() {
+            if rules.contains(&rule) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn remove(&mut self, rule: Rule) -> Option<Rule> {
+        for (_option, rules) in self.map.iter_mut() {
+            if rules.contains(&rule) {
+                let index = rules.iter().position(|r| r == &rule).unwrap();
+                return Some(rules.remove(index));
+            }
+        }
+
+        None
     }
 }
