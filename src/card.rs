@@ -1,3 +1,11 @@
+/* Created by Om Sharma and Skylar Huber
+ * 
+ * This program has a "Card" struct to hold the value
+ * and suit of a card, represneting an actual card in
+ * the game and a `RenderableCard` enum to implement
+ * `RenderableElement` so it can be drawn to the screen.
+ */
+
 use crate::render::ansi::ANSIColor;
 use crate::render::engine::{BoxDrawingProfile, RenderResult, RenderableElement, TextFrameBuffer};
 use enum_iterator::Sequence;
@@ -64,6 +72,8 @@ impl RenderableElement for RenderableCard {
                     y + Self::H - 2,
                 )?;
                 fb.text(suit_str, x + Self::W / 2, y + Self::H / 2)?;
+              
+                fb.style_clear_color_box(x, y, Self::W, Self::H)?;
                 fb.style_fg_box(suit_color, x + 1, y + 1, Self::W - 2, Self::H - 2)?;
             }
 
@@ -138,6 +148,43 @@ impl Value {
             Self::King => 13,
         }
     }
+
+    pub fn full_name(&self) -> String {
+        String::from(match self {
+            Self::Ace => "Ace",
+            Self::Two => "Two",
+            Self::Three => "Three",
+            Self::Four => "Four",
+            Self::Five => "Five",
+            Self::Six => "Six",
+            Self::Seven => "Seven",
+            Self::Eight => "Eight",
+            Self::Nine => "Nine",
+            Self::Ten => "Ten",
+            Self::Jack => "Jack",
+            Self::Queen => "Queen",
+            Self::King => "King",
+        })
+    }
+
+    pub fn from_str(str: &str) -> Option<Self> {
+      match str.to_uppercase().as_str() {
+            "A" | "ACE" => Some(Self::Ace),
+            "2" | "TWO" => Some(Self::Two),
+            "3" | "THREE" => Some(Self::Three),
+            "4" | "FOUR" => Some(Self::Four),
+            "5" | "FIVE" => Some(Self::Five),
+            "6" | "SIX" => Some(Self::Six),
+            "7" | "SEVEN" => Some(Self::Seven),
+            "8" | "EIGHT" => Some(Self::Eight),
+            "9" | "NINE" => Some(Self::Nine),
+            "10" | "TEN" => Some(Self::Ten),
+            "J" | "JACK" => Some(Self::Jack),
+            "Q" | "QUEEN" => Some(Self::Queen),
+            "K" | "KING" => Some(Self::King),
+        _ => None,
+      }
+    }
 }
 
 impl Display for Value {
@@ -176,6 +223,34 @@ impl Suit {
             Self::Diamonds => ANSIColor::Red,
             Self::Hearts => ANSIColor::Red,
         }
+    }
+
+    pub fn is_red(&self) -> bool {
+        match self {
+            Self::Clubs => false,
+            Self::Spades => false,
+            Self::Diamonds => true,
+            Self::Hearts => true,
+        }
+    }
+
+    pub fn full_name(&self) -> String {
+        String::from(match self {
+            Self::Clubs => "Clubs",
+            Self::Diamonds => "Diamonds",
+            Self::Hearts => "Hearts",
+            Self::Spades => "Spades",
+        })
+    }
+
+  pub fn from_str(str: &str) -> Option<Self> {
+      match str.to_uppercase().as_str() {
+            "CLUBS" => Some(Self::Clubs),
+            "HEARTS" => Some(Self::Hearts),
+            "DIAMONDS" => Some(Self::Diamonds),
+            "SPADES" => Some(Self::Spades),
+        _ => None,
+      }
     }
 }
 
