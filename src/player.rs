@@ -1,6 +1,12 @@
+/* Created by Om Sharma
+ * 
+ * This "Player" struct represents a player in the game. It
+ * holds the name of the player and their hand (of cards).
+ * It will be able to draw a card, play a card, and more.
+ */
+
 use crate::card::Card;
 use crate::deck::Deck;
-use crate::game::Game;
 
 /// A struct representing a player in the game.
 #[derive(Debug)]
@@ -18,22 +24,9 @@ impl Player {
         }
     }
 
-    /// Draws 1 card from `deck` and adds it to this player's hand, but can fail if `deck` is empty. If it fails, it returns `Err(1)`, else it returns `Ok(())`.
-    pub fn draw_fallible(&mut self, deck: &mut Deck) -> Result<(), usize> {
-        deck.deal(1, self)
-    }
-
     /// Draws 1 card from `deck`. If `deck` is empty, it creates a new `Deck` and appends it to `deck`, then draws from it.
-    pub fn draw(&mut self, deck: &mut Deck) {
-        if let Err(overdrawn_by) = self.draw_fallible(deck) {
-            Game::check_size_and_append(deck, overdrawn_by);
-            self.draw_fallible(deck).unwrap();
-        }
-    }
-
-    /// Returns a copy of the most recently added card in a player's hand.
-    pub fn newest_card(&self) -> Option<Card> {
-        self.hand.last().map(|v| *v)
+    pub fn draw(&mut self, deck: &mut Deck) -> Card {
+        deck.deal(1, self)[0]
     }
 
     /// Plays the card at `card_index` from hand, and puts it on the top of `deck`.
@@ -43,6 +36,10 @@ impl Player {
         let card = self.hand.swap_remove(card_index);
         // println!("New Card @ Pos: {}", self.hand[card_index]); This line breaks when card_index = self.hand.len()-1, also no idea what it was supposed to do in the first place
         deck.push_top(card);
+    }
+
+    pub fn clear_hand(&mut self) {
+        self.hand.drain(0..);
     }
 
     /// Returns this player's name.
