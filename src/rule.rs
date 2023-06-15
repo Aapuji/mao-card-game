@@ -1,5 +1,11 @@
+/* Created by Om Sharma
+ *
+ * This program has a "Rule" struct, which represents a rule in the
+ * game. It has an event on which it activates, and an action which
+ * happens when the rule is triggered.
+ */
+
 use crate::card::{Card, Suit, Value};
-use enum_iterator::Sequence;
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
 
@@ -31,8 +37,7 @@ pub enum Event {
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum Action {
     Say(String), // Perhaps have a macro that inserts the string into println!, so they can put {card}, {suit}, and {value} in the string to interpolate?. Also, this variant is the only variant which doesn't actually do something, but checks if the player does it correctly.
-    Wild,        // Changes the suit
-    Draw,
+    Draw,        // Number of cards to draw
     Repeat,
     Reverse,
     Skip,
@@ -75,5 +80,3 @@ impl Event {
         }
     }
 }
-
-// // https://open.spotify.com/track/1cKqgD7czbEuNpBU9uTs14?si=e80d694924424b0e
